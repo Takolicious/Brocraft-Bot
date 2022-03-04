@@ -142,9 +142,8 @@ bot.on("text", (packet) => {
         tv.channels.cache
           .get(chatchannel)
           .send(deathMessage.replace("&2", titleCase(entityName)));
-      } else if (!packet.parameters[1] == undefined && packet.parameters[1].includes("%entity.")) {
-        deathMessage = deathMessage.replace("&2", packet.parameters[1]);
-        tv.channels.cache.get(chatchannel).send(deathMessage);
+      } else if (packet.parameters[1] != undefined && !packet.parameters[1].includes("%entity.")) {
+        tv.channels.cache.get(chatchannel).send(deathMessage.replace("&2", packet.parameters[1]));
       } else {
         tv.channels.cache.get(chatchannel).send(deathMessage);
       }
