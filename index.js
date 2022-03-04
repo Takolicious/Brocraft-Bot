@@ -15,7 +15,10 @@ const webhooks = new Discord.WebhookClient(
   {
     url: process.env.WEBHOOK,
   },
-  { allowedMentions: { parse: [] } }
+  { allowedMentions: { 
+    parse: ["users"],
+    users: []
+  }}
 );
 
 const prefix = "bc!";
@@ -102,33 +105,47 @@ bot.on("text", (packet) => {
     }
   }
   if (packet.type == "translation") {
+    const multiplayerMessage = new Discord.MessageEmbed();
     var tv = client.guilds.cache.get(guild);
     console.log(packet);
     if (packet.message == "§e%multiplayer.player.joined") {
-      tv.channels.cache
-        .get(chatchannel)
-        .send(`\`\`\`fix\n${packet.parameters[0]} has joined the game.\`\`\``);
+      multiplayerMessage.setColor("#80b45c").setDescription(`\`\`\`fix\n${packet.parameters[0]} has joined the game.\`\`\``);
+      tv.channels.cache.get(chatchannel).send({ embeds: [multiplayerMessage] });
     }
     if (packet.message == "§e%multiplayer.player.left") {
-      tv.channels.cache
-        .get(chatchannel)
-        .send(`\`\`\`fix\n${packet.parameters[0]} has left the game.\`\`\``);
+      multiplayerMessage.setColor("#e02c44").setDescription(`\`\`\`fix\n${packet.parameters[0]} has left the game.\`\`\``);
+      tv.channels.cache.get(chatchannel).send({ embeds: [multiplayerMessage] });
     }
     if (String(packet.message).includes("death.")) {
-      let deathMessage = deathMessages[packet.message]
-        .replace(`&1`, packet.parameters[0])
-      if (packet.parameters[1] != undefined) {
-        let entityName = packet.parameters[1]
-        entityName = entityName.replace("%entity.", "").replace(".name", "").replace("_", " ").replace("v2", "")
+      let deathMessage = deathMessages[packet.message].replace(
+        `&1`,
+        packet.parameters[0]
+      );
+      if (
+        packet.parameters[1] != undefined &&
+        packet.parameters[1].includes("%entity.")
+      ) {
+        let entityName = packet.parameters[1];
+        entityName = entityName
+          .replace("%entity.", "")
+          .replace(".name", "")
+          .replace("_", " ")
+          .replace("v2", "");
         function titleCase(str) {
-          var splitStr = str.toLowerCase().split(' ');
+          var splitStr = str.toLowerCase().split(" ");
           for (var i = 0; i < splitStr.length; i++) {
-              splitStr[i] = splitStr[i].charAt(0).toUpperCase() + splitStr[i].substring(1);     
+            splitStr[i] =
+              splitStr[i].charAt(0).toUpperCase() + splitStr[i].substring(1);
           }
-          return splitStr.join(' '); 
+          return splitStr.join(" ");
         }
-        tv.channels.cache.get(chatchannel).send(deathMessage.replace('&2', titleCase(entityName)));
-      }else {
+        tv.channels.cache
+          .get(chatchannel)
+          .send(deathMessage.replace("&2", titleCase(entityName)));
+      } else if (!packet.parameters[1] == undefined && packet.parameters[1].includes("%entity.")) {
+        deathMessage = deathMessage.replace("&2", packet.parameters[1]);
+        tv.channels.cache.get(chatchannel).send(deathMessage);
+      } else {
         tv.channels.cache.get(chatchannel).send(deathMessage);
       }
     }
