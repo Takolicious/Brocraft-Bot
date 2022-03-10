@@ -160,9 +160,9 @@ client.on("messageCreate", (message) => {
       });
     }
     else if (message.content != "" && hasMedia(message)) {
-      console.log(`[\x1b[1m\x1b[34m%s\x1b[0m] ${message.author.username}: ${message.content}\n \x1b[2m└──── §oSent an attachment...\x1b[0m`, 'Discord')
+      console.log(`[\x1b[1m\x1b[34m%s\x1b[0m] ${message.author.username}: ${message.content}\n \x1b[2m└──── Sent an attachment...\x1b[0m`, 'Discord')
       bot.queue("command_request", {
-        command: `/tellraw @a {"rawtext":[{"text":"§r[§9Discord§r] <Takolicious> text here amogus§7\n└──── §oSent an attachment..."}]}"}]}`,
+        command: `/tellraw @a {"rawtext":[{"text":"§r[§9Discord§r] <${message.author.username}> ${message.content}§7\n└──── §oSent an attachment..."}]}`,
         origin: {
           size: 0,
           type: 0,
