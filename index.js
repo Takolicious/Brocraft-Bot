@@ -7,18 +7,27 @@ const token = process.env.TOKEN;
 const { REST } = require("@discordjs/rest");
 const { Routes } = require("discord-api-types/v9");
 const Discord = require("discord.js");
+const { isEntity, nameCorrection, hasMedia } = require("./functions.js");
 const client = new Discord.Client({
   intents: ["GUILDS", "GUILD_MESSAGES"],
+  presence: {
+    activities: [{
+      name: 'on Brocraft',
+      type: 'PLAYING'
+    }]
+  }
 });
 const fs = require("fs");
 const webhooks = new Discord.WebhookClient(
   {
     url: process.env.WEBHOOK,
   },
-  { allowedMentions: { 
-    parse: ["users"],
-    users: []
-  }}
+  {
+    allowedMentions: {
+      parse: ["users"],
+      users: []
+    }
+  }
 );
 
 const prefix = "bc!";
@@ -82,10 +91,10 @@ let bot = bedrock.createClient({
   username: process.env.ACCOUNTUSERNAME,
   offline: false,
 });
-bot.on("disconnect", (packet) => {
+bot.on("disconnect", () => {
   bot.reconnect;
 });
-bot.on("join", (packet) => {
+bot.on("join", () => {
   console.log("On Server");
   console.log(bot.profile);
 });
@@ -121,28 +130,11 @@ bot.on("text", (packet) => {
         `&1`,
         packet.parameters[0]
       );
-      if (
-        packet.parameters[1] != undefined &&
-        packet.parameters[1].includes("%entity.")
-      ) {
-        let entityName = packet.parameters[1];
-        entityName = entityName
-          .replace("%entity.", "")
-          .replace(".name", "")
-          .replace("_", " ")
-          .replace("v2", "");
-        function titleCase(str) {
-          var splitStr = str.toLowerCase().split(" ");
-          for (var i = 0; i < splitStr.length; i++) {
-            splitStr[i] =
-              splitStr[i].charAt(0).toUpperCase() + splitStr[i].substring(1);
-          }
-          return splitStr.join(" ");
-        }
+      if (isEntity(packet.parameters[1]) == 1) {
         tv.channels.cache
           .get(chatchannel)
-          .send(deathMessage.replace("&2", titleCase(entityName)));
-      } else if (packet.parameters[1] != undefined && !packet.parameters[1].includes("%entity.")) {
+          .send(deathMessage.replace("&2", nameCorrection(packet.parameters[1])));
+      } else if (isEntity(packet.parameters[1]) == 2) {
         tv.channels.cache.get(chatchannel).send(deathMessage.replace("&2", packet.parameters[1]));
       } else {
         tv.channels.cache.get(chatchannel).send(deathMessage);
@@ -150,21 +142,54 @@ bot.on("text", (packet) => {
     }
   }
 });
-client.on("message", (message) => {
+client.on("messageCreate", (message) => {
   if (message.channel.id == chatchannel) {
     if (message.author.id == client.user.id || message.webhookId) return;
-    console.log(message);
-    bot.queue("command_request", {
-      command: `/tellraw @a {"rawtext":[{"text":"§r[§9Discord§r] <${message.author.username}> ${message.content}"}]}`,
-      origin: {
-        size: 0,
-        type: 0,
-        uuid: "",
-        request_id: "",
-        player_entity_id: "",
-      },
-      interval: false,
-    });
+    if (message.content == "" && hasMedia(message)) {
+      console.log(`[\x1b[1m\x1b[34m%s\x1b[0m] ${message.author.username}: \x1b[2mSent an attachment...\x1b[0m`, 'Discord');
+      bot.queue("command_request", {
+        command: `/tellraw @a {"rawtext":[{"text":"§r[§9Discord§r] <${message.author.username}> §7Sent an attatchment..."}]}`,
+        origin: {
+          size: 0,
+          type: 0,
+          uuid: "",
+          request_id: "",
+          player_entity_id: "",
+        },
+        interval: false,
+      });
+    }
+    else if (message.content != "" && hasMedia(message)) {
+      console.log(`[\x1b[1m\x1b[34m%s\x1b[0m] ${message.author.username}: ${message.content}\n \x1b[2m└──── §oSent an attachment...\x1b[0m`, 'Discord')
+      bot.queue("command_request", {
+        command: `/tellraw @a {"rawtext":[{"text":"§r[§9Discord§r] <Takolicious> text here amogus§7\n└──── §oSent an attachment..."}]}"}]}`,
+        origin: {
+          size: 0,
+          type: 0,
+          uuid: "",
+          request_id: "",
+          player_entity_id: "",
+        },
+        interval: false,
+      });
+      return
+    }
+    else {
+      console.log(`[\x1b[1m\x1b[34m%s\x1b[0m] ${message.author.username}: \x1b[2m${message.content}\x1b[0m`, 'Discord');
+      console.log(message.attachments)
+      bot.queue("command_request", {
+        command: `/tellraw @a {"rawtext":[{"text":"§r[§9Discord§r] <${message.author.username}> ${message.content}"}]}`,
+        origin: {
+          size: 0,
+          type: 0,
+          uuid: "",
+          request_id: "",
+          player_entity_id: "",
+        },
+        interval: false,
+      });
+      return
+    }
   }
 });
 module.exports = { bot };
